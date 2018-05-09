@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!-- 声明spring中的事务管理器 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <tx:advice id="myAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <!-- REQUIRED 事务的传播性,如果没有事务给当前的方法开启一个新的事务 -->
+            <tx:method name="save*" propagation="REQUIRED"/>
+            <tx:method name="delete*" propagation="REQUIRED"/>
+            <tx:method name="update*" propagation="REQUIRED"/>
+            <!-- 這個類型的方法不需要使用事務 -->
+            <tx:method name="find*" propagation="SUPPORTS" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!-- (事务管理) -->
+    <!--<tx:annotation-driven transaction-manager="transactionManager"/>-->
+
+    <!--开启切面-->
+    <aop:aspectj-autoproxy/>
+
+    <bean id="dataSourceAspect" class="com.ccjjltx.util.DataSourceAspect"/>
+    <aop:config>
+        <aop:aspect ref="dataSourceAspect">
+            <!-- 拦截所有service方法 -->
+            <!--我这里实在Mapper上面加的注解，可自行调换  -->
+            <aop:pointcut id="dataSourcePointcut" expression="execution(* com.ccjjltx.dao..*.*(..))"/>
+            <aop:before pointcut-ref="dataSourcePointcut" method="intercept"/>
+        </aop:aspect>
+    </aop:config>
+
+</beans>
